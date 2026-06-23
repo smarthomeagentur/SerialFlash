@@ -35,9 +35,9 @@ class SerialFlashFile;
 
 class SerialFlashChip
 {
-public:
-	static bool begin(SPIClass& device, uint8_t pin = 6);
-	static bool begin(uint8_t pin = 6);
+      public:
+	static bool begin(SPIClass &device, uint8_t pin = 6, uint32_t setSpiFreq = 8000000UL);
+	static bool begin(uint8_t pin = 6, uint32_t setSpiFreq = 8000000UL);
 	static uint32_t capacity(const uint8_t *id);
 	static uint32_t blockSize();
 	static void sleep();
@@ -53,7 +53,8 @@ public:
 
 	static SerialFlashFile open(const char *filename);
 	static bool create(const char *filename, uint32_t length, uint32_t align = 0);
-	static bool createErasable(const char *filename, uint32_t length) {
+	static bool createErasable(const char *filename, uint32_t length)
+	{
 		return create(filename, length, blockSize());
 	}
 	static bool exists(const char *filename);
@@ -61,27 +62,30 @@ public:
 	static bool remove(SerialFlashFile &file);
 	static void opendir() { dirindex = 0; }
 	static bool readdir(char *filename, uint32_t strsize, uint32_t &filesize);
-private:
+
+      private:
 	static uint16_t dirindex; // current position for readdir()
-	static uint8_t flags;	// chip features
-	static uint8_t busy;	// 0 = ready
-				// 1 = suspendable program operation
-				// 2 = suspendable erase operation
-				// 3 = busy for realz!!
+	static uint8_t flags;	  // chip features
+	static uint8_t busy;	  // 0 = ready
+				  // 1 = suspendable program operation
+				  // 2 = suspendable erase operation
+				  // 3 = busy for realz!!
+	static uint32_t spiFreq;
 };
 
 extern SerialFlashChip SerialFlash;
 
-
 class SerialFlashFile
 {
-public:
-	constexpr SerialFlashFile() { }
-	operator bool() {
+      public:
+	constexpr SerialFlashFile() {}
+	operator bool()
+	{
 		if (address > 0) return true;
 		return false;
 	}
-	uint32_t read(void *buf, uint32_t rdlen) {
+	uint32_t read(void *buf, uint32_t rdlen)
+	{
 		if (offset + rdlen > length) {
 			if (offset >= length) return 0;
 			rdlen = length - offset;
@@ -90,7 +94,8 @@ public:
 		offset += rdlen;
 		return rdlen;
 	}
-	uint32_t write(const void *buf, uint32_t wrlen) {
+	uint32_t write(const void *buf, uint32_t wrlen)
+	{
 		if (offset + wrlen > length) {
 			if (offset >= length) return 0;
 			wrlen = length - offset;
@@ -99,34 +104,42 @@ public:
 		offset += wrlen;
 		return wrlen;
 	}
-	void seek(uint32_t n) {
+	void seek(uint32_t n)
+	{
 		offset = n;
 	}
-	uint32_t position() {
+	uint32_t position()
+	{
 		return offset;
 	}
-	uint32_t size() {
+	uint32_t size()
+	{
 		return length;
 	}
-	uint32_t available() {
+	uint32_t available()
+	{
 		if (offset >= length) return 0;
 		return length - offset;
 	}
 	void erase();
-	void flush() {
+	void flush()
+	{
 	}
-	void close() {
+	void close()
+	{
 	}
-	uint32_t getFlashAddress() {
+	uint32_t getFlashAddress()
+	{
 		return address;
 	}
-protected:
-	friend class SerialFlashChip;
-	uint32_t address = 0;  // where this file's data begins in the Flash, or zero
-	uint32_t length = 0;   // total length of the data in the Flash chip
-	uint32_t offset = 0; // current read/write offset in the file
-	uint16_t dirindex = 0;
-};
 
+      protected:
+	friend class SerialFlashChip;
+	uint32_t address = 0; // where this file's data begins in the Flash, or zero
+	uint32_t length = 0;  // total length of the data in the Flash chip
+	uint32_t offset = 0;  // current read/write offset in the file
+	uint16_t dirindex = 0;
+	uint32_t spiFreq = 8000000UL;
+};
 
 #endif
