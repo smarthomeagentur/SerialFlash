@@ -29,18 +29,21 @@
 #include "util/SerialFlash_directwrite.h"
 
 #define CSASSERT() DIRECT_WRITE_LOW(cspin_basereg, cspin_bitmask)
+#define CSASSERT() DIRECT_WRITE_LOW(cspin_basereg, cspin_bitmask)
 #define CSRELEASE() DIRECT_WRITE_HIGH(cspin_basereg, cspin_bitmask)
+// #define SPICONFIG   SPISettings(50000000, MSBFIRST, SPI_MODE0)
 // #define SPICONFIG   SPISettings(50000000, MSBFIRST, SPI_MODE0)
 
 uint16_t SerialFlashChip::dirindex = 0;
 uint8_t SerialFlashChip::flags = 0;
 uint8_t SerialFlashChip::busy = 0;
 uint32_t SerialFlashChip::spiFreq = 8000000UL;
+uint32_t SerialFlashChip::spiFreq = 8000000UL;
 
-static volatile IO_REG_TYPE *cspin_basereg;
+static volatile IO_REG_TYPE* cspin_basereg;
 static IO_REG_TYPE cspin_bitmask;
 
-static SPIClass *SPIPORT = &SPI;
+static SPIClass* SPIPORT = &SPI;
 
 #define FLAG_32BIT_ADDR 0x01   // larger than 16 MByte address
 #define FLAG_STATUS_CMD70 0x02 // requires special busy flag check
@@ -79,10 +82,9 @@ void SerialFlashChip::wait(void)
 	// Serial.println();
 }
 
-void SerialFlashChip::read(uint32_t addr, void *buf, uint32_t len)
-{
-	uint8_t *p = (uint8_t *)buf;
-	uint8_t b, f, status, cmd;
+void SerialFlashChip::read(uint32_t addr, void* buf, uint32_t len) {
+   uint8_t* p = (uint8_t*)buf;
+   uint8_t b, f, status, cmd;
 
 	memset(p, 0, len);
 	f = flags;
@@ -179,10 +181,9 @@ void SerialFlashChip::read(uint32_t addr, void *buf, uint32_t len)
 	SPIPORT->endTransaction();
 }
 
-void SerialFlashChip::write(uint32_t addr, const void *buf, uint32_t len)
-{
-	const uint8_t *p = (const uint8_t *)buf;
-	uint32_t max, pagelen;
+void SerialFlashChip::write(uint32_t addr, const void* buf, uint32_t len) {
+   const uint8_t* p = (const uint8_t*)buf;
+   uint32_t max, pagelen;
 
 	// Serial.printf("WR: addr %08X, len %d\n", addr, len);
 	do {
@@ -327,7 +328,17 @@ bool SerialFlashChip::ready()
 #define ID0_MACRONIX 0xC2
 #define ID0_SST 0xBF
 #define ID0_ADESTO 0x1F
+#define ID0_WINBOND 0xEF
+#define ID0_SPANSION 0x01
+#define ID0_MICRON 0x20
+#define ID0_MACRONIX 0xC2
+#define ID0_SST 0xBF
+#define ID0_ADESTO 0x1F
 
+// #define FLAG_32BIT_ADDR	0x01	// larger than 16 MByte address
+// #define FLAG_STATUS_CMD70	0x02	// requires special busy flag check
+// #define FLAG_DIFF_SUSPEND	0x04	// uses 2 different suspend commands
+// #define FLAG_256K_BLOCKS	0x10	// has 256K erase blocks
 // #define FLAG_32BIT_ADDR	0x01	// larger than 16 MByte address
 // #define FLAG_STATUS_CMD70	0x02	// requires special busy flag check
 // #define FLAG_DIFF_SUSPEND	0x04	// uses 2 different suspend commands
@@ -450,9 +461,8 @@ void SerialFlashChip::readSerialNumber(uint8_t *buf) // needs room for 8 bytes
 	//	Serial.printf("Serial Number: %02X %02X %02X %02X %02X %02X %02X %02X\n", buf[0], buf[1], buf[2], buf[3], buf[4], buf[5], buf[6], buf[7]);
 }
 
-uint32_t SerialFlashChip::capacity(const uint8_t *id)
-{
-	uint32_t n = 1048576; // unknown chips, default to 1 MByte
+uint32_t SerialFlashChip::capacity(const uint8_t* id) {
+   uint32_t n = 1048576;  // unknown chips, default to 1 MByte
 
 	if (id[0] == ID0_ADESTO && id[1] == 0x89) {
 		n = 1048576 * 16; // 16MB
@@ -468,18 +478,17 @@ uint32_t SerialFlashChip::capacity(const uint8_t *id)
 	return n;
 }
 
-uint32_t SerialFlashChip::blockSize()
-{
-	// Spansion chips >= 512 mbit use 256K sectors
-	if (flags & FLAG_256K_BLOCKS) return 262144;
-	// everything else seems to have 64K sectors
-	return 65536;
+uint32_t SerialFlashChip::blockSize() {
+   // Spansion chips >= 512 mbit use 256K sectors
+   if (flags & FLAG_256K_BLOCKS) return 262144;
+   // everything else seems to have 64K sectors
+   return 65536;
 }
 
 /*
 Chip		Uniform Sector Erase
-		20/21	52	D8/DC
-		-----	--	-----
+                20/21	52	D8/DC
+                -----	--	-----
 W25Q64CV	4	32	64
 W25Q128FV	4	32	64
 S25FL127S			64
@@ -495,6 +504,7 @@ AT25SF128A              32      64
 // ----			----	-----	--------	---	-------		-----
 // Winbond W25Q64CV	8	64	EF 40 17
 // Winbond W25Q128FV	16	64	EF 40 18	05	single		60 & C7
+// Winbond W25Q256FV	32	64	EF 40 19
 // Winbond W25Q256FV	32	64	EF 40 19
 // Spansion S25FL064A	8	?	01 02 16
 // Spansion S25FL127S	16	64	01 20 18	05
